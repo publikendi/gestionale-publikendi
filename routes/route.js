@@ -1,6 +1,20 @@
 const express = require('express');
 const route = express.Router();
 
+const requireAuth = require('../middleware/requireAuth');
+
+route.use((req, res, next) => {
+  if (req.path.startsWith('/auth-')) {
+    return next(); // rotta pubblica
+  }
+
+  if (!(req.session && req.session.isAuthenticated)) {
+    req.session.returnTo = req.originalUrl;
+  }
+
+  return requireAuth(req, res, next);
+});
+
 route.get('/', (req, res, next) => {
   res.render('index', {title: 'Dashboard'});
 })
