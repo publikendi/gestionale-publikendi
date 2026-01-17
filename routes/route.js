@@ -20,6 +20,7 @@ route.use((req, res, next) => {
 /* Rotte per Login SalesForce */
 route.get('/auth-salesforce', authController.startSalesforceLogin);
 route.get('/oauth/callback', authController.handleOAuthCallback);
+route.get('/auth-logout', authController.logout);
 
 route.get('/', (req, res, next) => {
   res.render('index', {title: 'Dashboard'});

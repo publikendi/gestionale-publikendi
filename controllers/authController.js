@@ -7,8 +7,8 @@ function getConfig() {
   const redirectUri = process.env.SALESFORCE_REDIRECT_URI;
   const scope = process.env.SALESFORCE_SCOPE || 'openid';
 
-  if (!baseUrl || !clientId || !redirectUri) {
-    throw new Error('Config Salesforce mancante: SALESFORCE_BASE_URL / SALESFORCE_CLIENT_ID / SALESFORCE_REDIRECT_URI');
+  if (!baseUrl || !clientId || !clientSecret || !redirectUri) {
+    throw new Error('Config Salesforce mancante: SALESFORCE_BASE_URL / SALESFORCE_CLIENT_ID / SALESFORCE_CLIENT_SECRET / SALESFORCE_REDIRECT_URI');
   }
 
   return { baseUrl, clientId, clientSecret, redirectUri, scope };
@@ -109,6 +109,25 @@ exports.handleOAuthCallback = async (req, res, next) => {
     if (err.details) {
         console.error('OAuth error details:', err.details);
     }
+    return next(err);
+  }
+};
+
+exports.logout = (req, res, next) => {
+  try {
+    const { baseUrl } = getConfig();
+    const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
+    const returnUrl = `${appBaseUrl}/auth-logout`;
+    const sfLogoutUrl = new URL('/secur/logout.jsp', baseUrl);
+
+    sfLogoutUrl.searchParams.set('retURL', returnUrl);
+
+    req.session.destroy((err) => {
+      if (err) return next(err);
+
+      return res.redirect(sfLogoutUrl.toString());
+    });
+  } catch (err) {
     return next(err);
   }
 };
