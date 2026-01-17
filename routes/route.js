@@ -2,10 +2,12 @@ const express = require('express');
 const route = express.Router();
 
 const requireAuth = require('../middleware/requireAuth');
+const authController = require('../controllers/authController');
 
+/* Aggiunta reqAuth */
 route.use((req, res, next) => {
-  if (req.path.startsWith('/auth-')) {
-    return next(); // rotta pubblica
+  if (req.path.startsWith('/auth-') || req.path.startsWith('/oauth/')) {
+    return next(); 
   }
 
   if (!(req.session && req.session.isAuthenticated)) {
@@ -14,6 +16,10 @@ route.use((req, res, next) => {
 
   return requireAuth(req, res, next);
 });
+
+/* Rotte per Login SalesForce */
+route.get('/auth-salesforce', authController.startSalesforceLogin);
+route.get('/oauth/callback', authController.handleOAuthCallback);
 
 route.get('/', (req, res, next) => {
   res.render('index', {title: 'Dashboard'});
