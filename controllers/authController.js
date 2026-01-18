@@ -87,7 +87,7 @@ exports.handleOAuthCallback = async (req, res, next) => {
     // Salviamo token e info utili in sessione
     req.session.salesforce = {
       accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token, // potrebbe essere undefined con scope minimo
+      refreshToken: tokenData.refresh_token,
       instanceUrl: tokenData.instance_url,
       tokenType: tokenData.token_type,
       issuedAt: tokenData.issued_at,
@@ -115,17 +115,9 @@ exports.handleOAuthCallback = async (req, res, next) => {
 
 exports.logout = (req, res, next) => {
   try {
-    const { baseUrl } = getConfig();
-    const appBaseUrl = process.env.APP_BASE_URL || 'http://localhost:3000';
-    const returnUrl = `${appBaseUrl}/auth-logout`;
-    const sfLogoutUrl = new URL('/secur/logout.jsp', baseUrl);
-
-    sfLogoutUrl.searchParams.set('retURL', returnUrl);
-
     req.session.destroy((err) => {
       if (err) return next(err);
-
-      return res.redirect(sfLogoutUrl.toString());
+      return res.redirect('/auth-logout');
     });
   } catch (err) {
     return next(err);
