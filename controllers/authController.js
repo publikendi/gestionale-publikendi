@@ -88,6 +88,7 @@ exports.handleOAuthCallback = async (req, res, next) => {
     req.session.salesforce = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
+      idToken: tokenData.id_token,
       instanceUrl: tokenData.instance_url,
       tokenType: tokenData.token_type,
       issuedAt: tokenData.issued_at,
