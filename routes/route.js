@@ -26,22 +26,6 @@ route.get('/', (req, res, next) => {
   res.render('index', {title: 'Dashboard'});
 })
 
-route.get('/apps-calendar', (req, res, next) => {
-  res.render('apps-calendar', {title: 'Calendar'});
-})
-
-route.get('/apps-chat', (req, res, next) => {
-  res.render('apps-chat', {title: 'Chat'});
-})
-
-route.get('/apps-email', (req, res, next) => {
-  res.render('apps-email', {title: 'Inbox'});
-})
-
-route.get('/apps-file-manager', (req, res, next) => {
-  res.render('apps-file-manager', {title: 'File Manager'});
-})
-
 route.get('/apps-invoice-create', (req, res, next) => {
   res.render('apps-invoice-create', {title: 'Invoice Create'});
 })
