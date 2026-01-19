@@ -1,23 +1,17 @@
 const express = require('express');
 const route = express.Router();
 
-/* Middleware */
+// Middleware
 const requireAuth = require('../middleware/requireAuth');
+const PublicRoute = require('../middleware/PublicRoute');
 
-/* Controller */
+// Controller
 const authController = require('../controllers/authController');
 const serviceController = require('../controllers/serviceController');
 
-/* Aggiunta reqAuth in pagine non pubbliche */
+// Seleziona rotte pubbliche o private
 route.use((req, res, next) => {
-  if (req.path.startsWith('/auth-') || req.path.startsWith('/oauth/')) {
-    return next(); 
-  }
-
-  if (!(req.session && req.session.isAuthenticated)) {
-    req.session.returnTo = req.originalUrl;
-  }
-
+  if (PublicRoute(req)) return next();
   return requireAuth(req, res, next);
 });
 
