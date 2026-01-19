@@ -4,17 +4,18 @@ async function jsonOrEmpty(resp) {
   return resp.json().catch(() => ({}));
 }
 
-
-/** GET identity endpoint (tokenData.id) -> info identità (display_name, photos, ecc.) */
+// Info identità (display_name, photos, ecc.) */
 async function fetchSalesforceIdentity({ identityUrl, accessToken }) {
   if (!fetchFn) {
-    throw new Error('fetch non disponibile. Usa Node 18+ oppure installa node-fetch.');
+    throw new Error(
+      "fetch non disponibile. Usa Node 18+ oppure installa node-fetch."
+    );
   }
-  if (!identityUrl) throw new Error('identityUrl mancante');
-  if (!accessToken) throw new Error('accessToken mancante');
+  if (!identityUrl) throw new Error("identityUrl mancante");
+  if (!accessToken) throw new Error("accessToken mancante");
 
   const resp = await fetchFn(identityUrl, {
-    method: 'GET',
+    method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -31,17 +32,20 @@ async function fetchSalesforceIdentity({ identityUrl, accessToken }) {
 
 /** Query su /services/data/vXX.X/query */
 async function querySalesforce({ instanceUrl, accessToken, apiVersion, soql }) {
-  if (!fetchFn) throw new Error('fetch non disponibile. Usa Node 18+ oppure installa node-fetch.');
-  if (!instanceUrl) throw new Error('instanceUrl mancante');
-  if (!accessToken) throw new Error('accessToken mancante');
-  if (!apiVersion) throw new Error('apiVersion mancante');
-  if (!soql) throw new Error('soql mancante');
+  if (!fetchFn)
+    throw new Error(
+      "fetch non disponibile. Usa Node 18+ oppure installa node-fetch."
+    );
+  if (!instanceUrl) throw new Error("instanceUrl mancante");
+  if (!accessToken) throw new Error("accessToken mancante");
+  if (!apiVersion) throw new Error("apiVersion mancante");
+  if (!soql) throw new Error("soql mancante");
 
   const url = new URL(`/services/data/v${apiVersion}/query/`, instanceUrl);
-  url.searchParams.set('q', soql);
+  url.searchParams.set("q", soql);
 
   const resp = await fetchFn(url.toString(), {
-    method: 'GET',
+    method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -59,21 +63,32 @@ async function querySalesforce({ instanceUrl, accessToken, apiVersion, soql }) {
 /**
  * Recupera record User partendo dallo userId
  */
-async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion, userId }) {
+async function fetchSalesforceUserRecord({
+  instanceUrl,
+  accessToken,
+  apiVersion,
+  userId,
+}) {
   const soql =
     "SELECT Id, Name, FirstName, LastName, Username, Email, Title, Department, " +
-    "SmallPhotoUrl, FullPhotoUrl, Profile.Name, UserRole.Name " +
+    "SmallPhotoUrl, FullPhotoUrl " +
     `FROM User WHERE Id = '${userId}'`;
 
-  const data = await querySalesforce({ instanceUrl, accessToken, apiVersion, soql });
+  const data = await querySalesforce({
+    instanceUrl,
+    accessToken,
+    apiVersion,
+    soql,
+  });
   const record = Array.isArray(data.records) ? data.records[0] : null;
 
   if (!record) {
-    const err = new Error('Salesforce User record not found');
+    const err = new Error("Salesforce User record not found");
     err.details = data;
     throw err;
   }
 
+  // Non forziamo più Profile/UserRole: verranno semplicemente assenti
   return record;
 }
 
@@ -98,8 +113,14 @@ function flattenUser({ identity, userRecord }) {
     timezone: identity.timezone,
 
     // Foto
-    photoSmallUrl: userRecord.SmallPhotoUrl || (identity.photos && identity.photos.thumbnail) || null,
-    photoFullUrl: userRecord.FullPhotoUrl || (identity.photos && identity.photos.picture) || null,
+    photoSmallUrl:
+      userRecord.SmallPhotoUrl ||
+      (identity.photos && identity.photos.thumbnail) ||
+      null,
+    photoFullUrl:
+      userRecord.FullPhotoUrl ||
+      (identity.photos && identity.photos.picture) ||
+      null,
 
     // Qualifica
     title: userRecord.Title || null,

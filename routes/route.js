@@ -1,10 +1,14 @@
 const express = require('express');
 const route = express.Router();
 
+/* Middleware */
 const requireAuth = require('../middleware/requireAuth');
-const authController = require('../controllers/authController');
 
-/* Aggiunta reqAuth */
+/* Controller */
+const authController = require('../controllers/authController');
+const serviceController = require('../controllers/serviceController');
+
+/* Aggiunta reqAuth in pagine non pubbliche */
 route.use((req, res, next) => {
   if (req.path.startsWith('/auth-') || req.path.startsWith('/oauth/')) {
     return next(); 
@@ -22,9 +26,17 @@ route.get('/auth-salesforce', authController.startSalesforceLogin);
 route.get('/oauth/callback', authController.handleOAuthCallback);
 route.get('/auth-logout-do', authController.logout);
 
+/* Rotte per i Servizi */
+route.get('/api/servizi/products', serviceController.getProducts);
+
+
 route.get('/', (req, res, next) => {
   res.render('index', {title: 'Dashboard'});
 })
+
+route.get('/apps-service', (req, res, next) => {
+  res.render('apps-service', { title: 'Servizi' });
+});
 
 route.get('/apps-invoice-create', (req, res, next) => {
   res.render('apps-invoice-create', {title: 'Invoice Create'});
