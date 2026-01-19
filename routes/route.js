@@ -3,7 +3,7 @@ const route = express.Router();
 
 // Middleware
 const requireAuth = require('../middleware/requireAuth');
-const PublicRoute = require('../middleware/PublicRoute');
+const isPublicRoute = require('../middleware/publicRoute');
 
 // Controller
 const authController = require('../controllers/authController');
@@ -11,7 +11,7 @@ const serviceController = require('../controllers/serviceController');
 
 // Seleziona rotte pubbliche o private
 route.use((req, res, next) => {
-  if (PublicRoute(req)) return next();
+  if (isPublicRoute(req)) return next();
   return requireAuth(req, res, next);
 });
 

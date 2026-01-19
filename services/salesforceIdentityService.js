@@ -4,25 +4,36 @@ async function jsonOrEmpty(resp) {
   return resp.json().catch(() => ({}));
 }
 
-// Info identità (display_name, photos, ecc.) */
-async function fetchSalesforceIdentity({ identityUrl, accessToken }) {
+function isPlainObject(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+async function fetchJsonWithTimeout(url, { accessToken, timeoutMs = 10000 } = {}) {
   if (!fetchFn) {
-    throw new Error(
-      "fetch non disponibile. Usa Node 18+ oppure installa node-fetch."
-    );
+    throw new Error('fetch non disponibile. Usa Node 18+ oppure installa node-fetch.');
   }
-  if (!identityUrl) throw new Error("identityUrl mancante");
-  if (!accessToken) throw new Error("accessToken mancante");
+  if (!url) throw new Error('url mancante');
+  if (!accessToken) throw new Error('accessToken mancante');
 
-  const resp = await fetchFn(identityUrl, {
-    method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  let resp;
+  try {
+    resp = await fetchFn(url, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: ctrl.signal,
+    });
+  } finally {
+    clearTimeout(t);
+  }
 
   const data = await jsonOrEmpty(resp);
 
   if (!resp.ok) {
-    const err = new Error(`Salesforce identity error: ${resp.status}`);
+    const err = new Error(`Salesforce HTTP ${resp.status}`);
+    err.status = resp.status;
     err.details = data;
     throw err;
   }
@@ -30,73 +41,92 @@ async function fetchSalesforceIdentity({ identityUrl, accessToken }) {
   return data;
 }
 
-/** Query su /services/data/vXX.X/query */
-async function querySalesforce({ instanceUrl, accessToken, apiVersion, soql }) {
-  if (!fetchFn)
-    throw new Error(
-      "fetch non disponibile. Usa Node 18+ oppure installa node-fetch."
-    );
-  if (!instanceUrl) throw new Error("instanceUrl mancante");
-  if (!accessToken) throw new Error("accessToken mancante");
-  if (!apiVersion) throw new Error("apiVersion mancante");
-  if (!soql) throw new Error("soql mancante");
+async function fetchSalesforceIdentity({ identityUrl, accessToken }) {
+  if (!identityUrl) throw new Error('identityUrl mancante');
+  if (!accessToken) throw new Error('accessToken mancante');
 
-  const url = new URL(`/services/data/v${apiVersion}/query/`, instanceUrl);
-  url.searchParams.set("q", soql);
-
-  const resp = await fetchFn(url.toString(), {
-    method: "GET",
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  const data = await jsonOrEmpty(resp);
-
-  if (!resp.ok) {
-    const err = new Error(`Salesforce query error: ${resp.status}`);
-    err.details = data;
-    throw err;
-  }
-
-  return data;
+  return fetchJsonWithTimeout(identityUrl, { accessToken, timeoutMs: 10000 });
 }
 
-/**
- * Recupera record User partendo dallo userId
- */
-async function fetchSalesforceUserRecord({
-  instanceUrl,
-  accessToken,
-  apiVersion,
-  userId,
-}) {
-  const soql =
-    "SELECT Id, Name, FirstName, LastName, Username, Email, Title, Department, " +
-    "SmallPhotoUrl, FullPhotoUrl " +
-    `FROM User WHERE Id = '${userId}'`;
+async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion, userId }) {
+  if (!instanceUrl) throw new Error('instanceUrl mancante');
+  if (!accessToken) throw new Error('accessToken mancante');
+  if (!apiVersion) throw new Error('apiVersion mancante');
+  if (!userId) throw new Error('userId mancante');
 
-  const data = await querySalesforce({
-    instanceUrl,
-    accessToken,
-    apiVersion,
-    soql,
-  });
-  const record = Array.isArray(data.records) ? data.records[0] : null;
+  const url = new URL(
+    `/services/data/v${apiVersion}/sobjects/User/${encodeURIComponent(userId)}`,
+    instanceUrl
+  );
 
-  if (!record) {
-    const err = new Error("Salesforce User record not found");
-    err.details = data;
+  url.searchParams.set(
+    'fields',
+    [
+      'Id',
+      'Name',
+      'FirstName',
+      'LastName',
+      'Username',
+      'Email',
+      'Title',
+      'Department',
+      'SmallPhotoUrl',
+      'FullPhotoUrl',
+      'Profile.Name',
+      'UserRole.Name',
+    ].join(',')
+  );
+
+  try {
+    const data = await fetchJsonWithTimeout(url.toString(), { accessToken, timeoutMs: 10000 });
+
+    if (!isPlainObject(data) || !data.Id) {
+      const err = new Error('Salesforce User record not found');
+      err.details = data;
+      throw err;
+    }
+
+    return data;
+  } catch (err) {
+    if (err && err.status === 400) {
+      const url2 = new URL(
+        `/services/data/v${apiVersion}/sobjects/User/${encodeURIComponent(userId)}`,
+        instanceUrl
+      );
+
+      url2.searchParams.set(
+        'fields',
+        [
+          'Id',
+          'Name',
+          'FirstName',
+          'LastName',
+          'Username',
+          'Email',
+          'Title',
+          'Department',
+          'SmallPhotoUrl',
+          'FullPhotoUrl',
+        ].join(',')
+      );
+
+      const data2 = await fetchJsonWithTimeout(url2.toString(), { accessToken, timeoutMs: 10000 });
+
+      if (!isPlainObject(data2) || !data2.Id) {
+        const e2 = new Error('Salesforce User record not found');
+        e2.details = data2;
+        throw e2;
+      }
+
+      return data2;
+    }
+
     throw err;
   }
-
-  // Non forziamo più Profile/UserRole: verranno semplicemente assenti
-  return record;
 }
 
-/**
- * Flatten: unisce identity + User record in un singolo oggetto "user" per la sessione/view.
- */
 function flattenUser({ identity, userRecord }) {
-  return {
+  const user = {
     // Identity (comodo per topbar)
     sfIdentityIdUrl: identity.id,
     sfUserId: identity.user_id,
@@ -127,13 +157,17 @@ function flattenUser({ identity, userRecord }) {
     department: userRecord.Department || null,
     profileName: (userRecord.Profile && userRecord.Profile.Name) || null,
     roleName: (userRecord.UserRole && userRecord.UserRole.Name) || null,
+  };
 
-    // Debug/extra
-    raw: {
+  // Debug/extra: evita di salvare raw in produzione (privacy + session bloat)
+  if (process.env.NODE_ENV !== 'production') {
+    user.raw = {
       identity,
       userRecord,
-    },
-  };
+    };
+  }
+
+  return user;
 }
 
 module.exports = {

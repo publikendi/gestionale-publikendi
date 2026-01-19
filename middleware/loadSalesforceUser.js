@@ -4,13 +4,10 @@ const {
   flattenUser,
 } = require('../services/salesforceIdentityService');
 
-/** STRICT + "once per session": */
 module.exports = async function loadSalesforceUser(req, res, next) {
   try {
-    // Non autenticato: non facciamo nulla
     if (!(req.session && req.session.isAuthenticated)) return next();
 
-    // Già caricato: riuso
     if (req.session.user) {
       res.locals.user = req.session.user;
       return next();
@@ -24,13 +21,11 @@ module.exports = async function loadSalesforceUser(req, res, next) {
 
     const apiVersion = process.env.SALESFORCE_API_VERSION || '59.0';
 
-    // 1) Identity
     const identity = await fetchSalesforceIdentity({
       identityUrl: sf.identityUrl,
       accessToken: sf.accessToken,
     });
 
-    // 2) User record (per qualifica/title/profile/role)
     const userRecord = await fetchSalesforceUserRecord({
       instanceUrl: sf.instanceUrl,
       accessToken: sf.accessToken,
@@ -38,7 +33,6 @@ module.exports = async function loadSalesforceUser(req, res, next) {
       userId: identity.user_id,
     });
 
-    // 3) Flatten
     const user = flattenUser({ identity, userRecord });
 
     req.session.user = user;
@@ -46,8 +40,15 @@ module.exports = async function loadSalesforceUser(req, res, next) {
 
     return next();
   } catch (err) {
-    // STRICT
+    const status = err && err.status;
     console.error('[loadSalesforceUser] failed:', err.message, err.details || '');
-    req.session.destroy(() => res.redirect('/auth-login'));
+
+    if (status === 401 || status === 403) {
+      req.session.destroy(() => res.redirect('/auth-login'));
+      return;
+    }
+
+    res.locals.user = null;
+    return next();
   }
 };
