@@ -531,13 +531,13 @@
             aria-expanded="false"
           >
             <img
-              src="/images/users/avatar-1.jpg"
+              src="<%= (user && user.photoSmallUrl) ? user.photoSmallUrl : '/images/users/avatar-1.jpg' %>"
               width="32"
               class="rounded-circle me-lg-2 d-flex"
               alt="user-image"
             />
             <span class="d-lg-flex flex-column gap-1 d-none">
-              <h5 class="my-0">Nowak Helme</h5>
+              <h5 class="my-0"><%= (user && user.displayName) ? user.displayName : 'Utente' %></h5>
             </span>
             <i
               class="ri-arrow-down-s-line d-none d-lg-block align-middle ms-1"

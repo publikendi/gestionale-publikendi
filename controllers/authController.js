@@ -92,15 +92,19 @@ exports.handleOAuthCallback = async (req, res, next) => {
       instanceUrl: tokenData.instance_url,
       tokenType: tokenData.token_type,
       issuedAt: tokenData.issued_at,
+      identityUrl: tokenData.id,
     };
 
-    // Impostiamo la sessione come autenticata (Step A lo richiede)
+    // Impostiamo la sessione come autenticata
     req.session.isAuthenticated = true;
 
     // Pulizia: non serve più tenere oauth code_verifier/state
     delete req.session.oauth;
 
-    // Redirect alla pagina richiesta prima del login (Step A)
+    // Se riloggano, vogliamo ricaricare user (once per session)
+    delete req.session.user;
+
+    // Redirect alla pagina richiesta prima del login
     const redirectTo = req.session.returnTo || '/index';
     delete req.session.returnTo;
 

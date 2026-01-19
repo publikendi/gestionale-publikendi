@@ -7,6 +7,7 @@ const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const upload = require('express-fileupload');
+const loadSalesforceUser = require('./middleware/loadSalesforceUser');
 const dotenv = require('dotenv');
 dotenv.config({ path: "./config.env" });
 
@@ -17,6 +18,8 @@ app.use(upload());
 app.use(express.json());
 app.use(session({ resave: false, saveUninitialized: true, secret: 'nodedemo' }));
 app.use(cookieParser());
+
+app.use(loadSalesforceUser);
 
 app.set('layout', 'partials/layout-vertical');
 app.use(expressLayouts);

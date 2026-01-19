@@ -36,11 +36,11 @@
             <div class="dropdown-center text-center">
                 <a class="topbar-link dropdown-toggle text-reset drop-arrow-none px-2" data-bs-toggle="dropdown"
                     type="button" aria-haspopup="false" aria-expanded="false">
-                    <img src="/images/users/avatar-1.jpg" width="46" class="rounded-circle" alt="user-image">
+                    <img src="<%= (user && user.photoSmallUrl) ? user.photoSmallUrl : '/images/users/avatar-1.jpg' %>" width="46" class="rounded-circle" alt="user-image">
                     <span class="d-flex gap-1 sidenav-user-name my-2">
                         <span>
-                            <span class="mb-0 fw-semibold lh-base fs-15">Nowak Helme</span>
-                            <p class="my-0 fs-13 text-muted">Admin Head</p>
+                            <span class="mb-0 fw-semibold lh-base fs-15"><%= (user && user.displayName) ? user.displayName : 'Utente' %></span>
+                            <p class="my-0 fs-13 text-muted"><%= (user && (user.title || user.profileName)) ? (user.title || user.profileName) : 'Ruolo' %></p>
                         </span>
 
                         <i class="ri-arrow-down-s-line d-block sidenav-user-arrow align-middle"></i>
@@ -912,13 +912,6 @@
                 </div>
             </li>
         </ul>
-
-        <!-- Help Box -->
-        <div class="help-box text-center">
-            <h5 class="fw-semibold fs-16">Unlimited Access</h5>
-            <p class="mb-3 text-muted">Upgrade to plan to get access to unlimited reports</p>
-            <a href="javascript: void(0);" class="btn btn-danger btn-sm">Upgrade</a>
-        </div>
 
         <div class="clearfix"></div>
     </div>
