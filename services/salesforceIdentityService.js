@@ -127,7 +127,7 @@ async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion,
 
 function flattenUser({ identity, userRecord }) {
   const user = {
-    // Identity (comodo per topbar)
+    // Identity 
     sfIdentityIdUrl: identity.id,
     sfUserId: identity.user_id,
     sfOrgId: identity.organization_id,
