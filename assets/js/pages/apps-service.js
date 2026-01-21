@@ -1,183 +1,118 @@
 (function () {
   const statusEl = document.getElementById("servizi-status");
-  const tableEl = document.getElementById("table-gridjs");
-
-  if (!tableEl) {
-    console.warn("[apps-service] #table-gridjs non trovato nella pagina");
-    return;
-  }
+  const tableWrapper = document.getElementById("table-gridjs"); 
 
   let rowsByCode = new Map();
-  let rowClickBound = false;
+
+  if (!tableWrapper) return;
+
+  // 1. CONFIGURAZIONE MODAL
+  const modalEl = document.getElementById("serviceDetailsModal");
+  let bsModal = null;
+  if (modalEl && window.bootstrap) {
+    bsModal = new window.bootstrap.Modal(modalEl);
+  }
 
   function formatPrice(value) {
-    if (value === null || typeof value === "undefined" || value === "") return "";
-    const n = Number(value);
-    if (Number.isNaN(n)) return "";
+    if (value === null || value === undefined) return "";
     return new Intl.NumberFormat("it-IT", {
       style: "currency",
       currency: "EUR",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(n);
+    }).format(value);
   }
 
-  function text(v) {
-    return String(v ?? "");
-  }
+  // 2. GESTIONE CLICK
+  tableWrapper.addEventListener('click', function(e) {
+    const tr = e.target.closest('tr');
+    if (!tr) return;
 
-  function normalizeRecord(p) {
-    // Backend già normalizza e ripulisce i campi HTML
-    return {
-      productCode: String(p.productCode ?? "").trim(),
-      name: p.name ?? "",
-      family: p.family ?? "",
-      description: p.description ?? "",
-      unitPrice: p.unitPrice ?? null,
-      obiettivo: p.obiettivo ?? "",
-      servizio: p.servizio ?? "",
-      vantaggi: p.vantaggi ?? "",
-    };
-  }
+    const firstCell = tr.querySelector('td'); 
+    if(!firstCell) return;
+    
+    const code = firstCell.textContent.trim();
+    const record = rowsByCode.get(code);
 
-  function setModalText(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text(value);
-  }
-
-  function openServiceModalByCode(productCode) {
-    const key = String(productCode || "");
-    const r = rowsByCode.get(key);
-    if (!r) return;
-
-    setModalText("m-codice", r.productCode);
-    setModalText("m-nome", r.name);
-    setModalText("m-famiglia", r.family);
-    setModalText("m-descrizione", r.description);
-    setModalText("m-prezzo", formatPrice(r.unitPrice));
-    setModalText("m-obiettivo", r.obiettivo);
-    setModalText("m-servizio", r.servizio);
-    setModalText("m-vantaggi", r.vantaggi);
-
-    const modalEl = document.getElementById("serviceDetailsModal");
-    if (!modalEl) {
-      console.warn("[apps-service] modal #serviceDetailsModal non trovato");
-      return;
+    if (record) {
+      openModal(record);
     }
+  });
 
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  function openModal(p) {
+    if (!bsModal) return;
+    document.getElementById("m-codice").textContent = p.productCode || "-";
+    document.getElementById("m-nome").textContent = p.name || "-";
+    document.getElementById("m-famiglia").textContent = p.family || "-";
+    document.getElementById("m-descrizione").textContent = p.description || "-";
+    document.getElementById("m-prezzo").textContent = formatPrice(p.unitPrice);
+    document.getElementById("m-obiettivo").textContent = p.obiettivo || "-";
+    document.getElementById("m-servizio").textContent = p.servizio || "-";
+    document.getElementById("m-vantaggi").textContent = p.vantaggi || "-";
+    bsModal.show();
   }
 
-  function escapeHtml(s) {
-    return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function bindRowClickOnce() {
-    if (rowClickBound) return;
-    rowClickBound = true;
-
-    tableEl.addEventListener("click", (e) => {
-      const tr = e.target?.closest?.("tbody tr");
-      if (!tr) return;
-
-      const firstCell = tr.querySelector("td");
-      const code = String(firstCell?.textContent ?? "").trim();
-      if (!code) return;
-
-      openServiceModalByCode(code);
-    });
-  }
-
-  function applyRowHoverCursorOnce() {
-    if (document.getElementById("apps-service-grid-style")) return;
-
-    const style = document.createElement("style");
-    style.id = "apps-service-grid-style";
-    style.textContent = `
-      #table-gridjs tbody tr { cursor: pointer; }
-      #table-gridjs tbody tr:hover { background-color: rgba(0, 0, 0, 0.03); }
-      #table-gridjs tbody tr td { user-select: none; }
-      #table-gridjs tbody tr td:nth-child(4) { user-select: text; }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function renderTable(rows) {
-    tableEl.innerHTML = "";
-    rowsByCode = new Map(rows.map((r) => [r.productCode, r]));
-
-    const { Grid, html } = window.gridjs;
-
-    new Grid({
-      columns: [
-        { name: "Codice" },
-        {
-          name: "Nome",
-          formatter: (cell) => html(`<span class="fw-semibold">${escapeHtml(cell)}</span>`),
-        },
-        { name: "Famiglia" },
-        { name: "Descrizione" },
-        {
-          name: "Prezzo",
-          formatter: (cell) => html(`<div class="text-end">${formatPrice(cell)}</div>`),
-        },
-      ],
-      data: rows.map((r) => [r.productCode, r.name, r.family, r.description, r.unitPrice]),
-      search: true,
-      sort: true,
-      pagination: { limit: 25, summary: true },
-      className: { table: "table table-hover align-middle mb-0" },
-      language: {
-        search: { placeholder: "Cerca..." },
-        pagination: {
-          previous: "Precedente",
-          next: "Successivo",
-          showing: "Mostro",
-          results: () => "righe",
-          to: "a",
-          of: "di",
-        },
-      },
-    }).render(tableEl);
-
-    bindRowClickOnce();
-    applyRowHoverCursorOnce();
-  }
-
+  // 3. INIT
   async function init() {
     if (statusEl) statusEl.textContent = "Caricamento prodotti...";
 
-    const res = await fetch("/api/servizi/products", {
-      headers: { Accept: "application/json" },
-    });
+    try {
+      const res = await fetch("/api/servizi/products");
+      if (!res.ok) throw new Error("Errore API");
+      
+      const data = await res.json();
+      const records = data.records || [];
 
-    if (!res.ok) {
-      if (statusEl) statusEl.textContent = "Errore nel caricamento prodotti.";
-      console.error(await res.text());
-      return;
+      if (!records.length) {
+        if (statusEl) statusEl.textContent = "Nessun prodotto trovato.";
+        return;
+      }
+
+      rowsByCode.clear();
+      records.forEach(r => {
+        if(r.productCode) rowsByCode.set(r.productCode, r);
+      });
+
+      if (statusEl) statusEl.textContent = ""; 
+
+      new gridjs.Grid({
+        columns: [
+          { name: "Codice", width: "100px" }, 
+          { name: "Nome" },
+          { name: "Famiglia" },
+          { 
+            name: "Prezzo", 
+            formatter: (cell) => formatPrice(cell) 
+          },
+        ],
+        data: records.map(p => [
+          p.productCode,
+          p.name,
+          p.family,
+          p.unitPrice
+        ]),
+        search: true,
+        sort: true,
+        pagination: { limit: 20 },
+        className: { 
+            table: "table table-hover align-middle mb-0",
+            tr: "cursor-pointer" 
+        },
+        language: {
+          search: { placeholder: "Cerca..." },
+          pagination: { previous: "Prec", next: "Succ", showing: "Mostro", results: () => "risultati" }
+        }
+      }).render(tableWrapper);
+
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .cursor-pointer:hover { cursor: pointer; background-color: #f8f9fa; }
+      `;
+      document.head.appendChild(style);
+
+    } catch (err) {
+      console.error(err);
+      if (statusEl) statusEl.textContent = "Errore caricamento dati.";
     }
-
-    const data = await res.json();
-    const records = Array.isArray(data.records) ? data.records : [];
-
-    if (!records.length) {
-      if (statusEl) statusEl.textContent = "Nessun prodotto trovato nel listino.";
-      tableEl.innerHTML = "";
-      return;
-    }
-
-    const rows = records.map(normalizeRecord);
-    if (statusEl) statusEl.textContent = `Prodotti caricati: ${rows.length}`;
-    renderTable(rows);
   }
 
-  init().catch((err) => {
-    if (statusEl) statusEl.textContent = "Errore imprevisto.";
-    console.error(err);
-  });
+  init();
 })();

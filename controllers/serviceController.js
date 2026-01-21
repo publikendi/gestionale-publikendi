@@ -1,4 +1,4 @@
-const salesforceService = require('../services/salesforceService');
+const salesforceServices = require('../services/salesforceServices');
 
 function getSalesforceSession(req) {
   const sf = req.session?.salesforce;
@@ -17,7 +17,7 @@ exports.getProducts = async (req, res) => {
     const apiVersion = process.env.SALESFORCE_API_VERSION || '59.0';
     const pricebookName = process.env.SALESFORCE_PRICEBOOK_NAME || 'Listino Prezzi';
 
-    const records = await salesforceService.fetchProductsForPricebook({
+    const records = await salesforceServices.fetchProductsForPricebook({
       instanceUrl: sf.instanceUrl,
       accessToken: sf.accessToken,
       apiVersion,
@@ -26,7 +26,7 @@ exports.getProducts = async (req, res) => {
 
     return res.json({ records });
   } catch (err) {
-    console.error('[serviceController.getProducts] failed', {
+    console.error('[salesforcesService.getProducts] failed', {
       message: err.message,
       status: err.status,
       details: err.details,

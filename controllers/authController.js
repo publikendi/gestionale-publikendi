@@ -14,10 +14,7 @@ function getConfig() {
   return { baseUrl, clientId, clientSecret, redirectUri, scope };
 }
 
-/**
- * GET /auth/salesforce
- * Avvia login: genera PKCE + state, salva in sessione, redirect a Salesforce authorize.
- */
+// Avvio login
 exports.startSalesforceLogin = (req, res, next) => {
   try {
     const { baseUrl, clientId, redirectUri, scope } = getConfig();
@@ -26,7 +23,6 @@ exports.startSalesforceLogin = (req, res, next) => {
     const codeChallenge = salesforceOAuthService.generateCodeChallenge(codeVerifier);
     const state = salesforceOAuthService.generateState();
 
-    // Salviamo in sessione per usarli nella callback
     req.session.oauth = {
       provider: 'salesforce',
       codeVerifier,
@@ -49,10 +45,7 @@ exports.startSalesforceLogin = (req, res, next) => {
   }
 };
 
-/**
- * GET /oauth/callback
- * Riceve code + state da Salesforce, valida, scambia con token, salva sessione.
- */
+// Risposta Salesforce
 exports.handleOAuthCallback = async (req, res, next) => {
   try {
     const { baseUrl, clientId, clientSecret, redirectUri } = getConfig();
@@ -60,17 +53,14 @@ exports.handleOAuthCallback = async (req, res, next) => {
     const code = req.query.code;
     const state = req.query.state;
 
-    // Validazioni base
     if (!code) return res.status(400).send('Missing code');
     if (!state) return res.status(400).send('Missing state');
 
-    // Recupero dati PKCE da sessione
     const oauthSession = req.session.oauth;
     if (!oauthSession || oauthSession.provider !== 'salesforce') {
       return res.status(400).send('OAuth session not found');
     }
 
-    // Verifica CSRF
     if (oauthSession.state !== state) {
       return res.status(400).send('Invalid state');
     }
@@ -84,7 +74,6 @@ exports.handleOAuthCallback = async (req, res, next) => {
       codeVerifier: oauthSession.codeVerifier,
     });
 
-    // Salviamo token e info utili in sessione
     req.session.salesforce = {
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
@@ -95,16 +84,11 @@ exports.handleOAuthCallback = async (req, res, next) => {
       identityUrl: tokenData.id,
     };
 
-    // Impostiamo la sessione come autenticata
     req.session.isAuthenticated = true;
 
-    // Pulizia: non serve più tenere oauth code_verifier/state
     delete req.session.oauth;
-
-    // Se riloggano, vogliamo ricaricare user (once per session)
     delete req.session.user;
 
-    // Redirect alla pagina richiesta prima del login
     const redirectTo = req.session.returnTo || '/index';
     delete req.session.returnTo;
 

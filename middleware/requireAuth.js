@@ -1,15 +1,15 @@
-// Middleware di protezione.
 module.exports = function requireAuth(req, res, next) {
-  const isAuthenticated = Boolean(req.session && req.session.isAuthenticated);
-  if (isAuthenticated) return next();
+  // Se l'utente è autenticato, prosegui
+  if (req.session && req.session.isAuthenticated) {
+    return next();
+  }
 
-  const isPublicAuthPath =
-    req.path.startsWith('/auth-') || req.path.startsWith('/oauth/');
-
-  if (!isPublicAuthPath && req.method === 'GET' && req.session) {
+  // Gestione della "memoria" della rotta richiesta per il redirect post-login
+  if (req.method === 'GET' && req.session) {
     req.session.returnTo = req.originalUrl;
   }
 
+  // Se è una richiesta API o AJAX, rispondi con JSON invece di redirect
   const accepts = req.get('accept') || '';
   const isAjax = req.xhr === true;
   const wantsJson = accepts.includes('application/json');
@@ -18,5 +18,6 @@ module.exports = function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Altrimenti, redirect al login
   return res.redirect('/auth-login');
 };

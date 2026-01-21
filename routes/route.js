@@ -3,473 +3,191 @@ const route = express.Router();
 
 // Middleware
 const requireAuth = require('../middleware/requireAuth');
-const isPublicRoute = require('../middleware/publicRoute');
 
 // Controller
 const authController = require('../controllers/authController');
 const serviceController = require('../controllers/serviceController');
+const leadController = require('../controllers/leadController');
 
-// Seleziona rotte pubbliche o private
-route.use((req, res, next) => {
-  if (isPublicRoute(req)) return next();
-  return requireAuth(req, res, next);
-});
+// ============================================================================
+// 1. ROTTE PUBBLICHE (Accessibili a tutti)
+// ============================================================================
 
-/* Rotte per Login SalesForce */
+// Auth & OAuth
 route.get('/auth-salesforce', authController.startSalesforceLogin);
 route.get('/oauth/callback', authController.handleOAuthCallback);
 route.get('/auth-logout-do', authController.logout);
 
-/* Rotte per i Servizi */
-route.get('/api/servizi/products', serviceController.getProducts);
+const authPages = [
+    { path: '/auth-confirm-mail', title: 'Confirm Mail' },
+    { path: '/auth-createpw', title: 'Create Password' },
+    { path: '/auth-lock-screen', title: 'Lock Screen' },
+    { path: '/auth-login-pin', title: 'Login Pin' },
+    { path: '/auth-login', title: 'Login' },
+    { path: '/auth-logout', title: 'Logout' },
+    { path: '/auth-recoverpw', title: 'Recover Password' },
+    { path: '/auth-register', title: 'Sign Up' },
+    { path: '/error-400', title: 'Error 400' },
+    { path: '/error-401', title: 'Error 401' },
+    { path: '/error-403', title: 'Error 403' },
+    { path: '/error-404', title: 'Error 404' }, // 404 standard
+    { path: '/error-500', title: 'Error 500' },
+    { path: '/error-service-unavailable', title: 'Error 408' },
+    { path: '/layouts-horizontal', title: 'Horizontal Layout' },
+    { path: '/pages-coming-soon', title: 'Coming Soon' },
+    { path: '/pages-maintenance', title: 'Maintenance' },
+];
 
-
-route.get('/', (req, res, next) => {
-  res.render('index', {title: 'Dashboard'});
-})
-
-route.get('/apps-service', (req, res, next) => {
-  res.render('apps-service', { title: 'Servizi' });
+authPages.forEach(page => {
+    route.get(page.path, (req, res) => {
+        res.render(page.path.substring(1), { 
+            title: page.title, 
+            layout: 'partials/base-layout' 
+        });
+    });
 });
 
-route.get('/apps-invoice-create', (req, res, next) => {
-  res.render('apps-invoice-create', {title: 'Invoice Create'});
-})
-
-route.get('/apps-invoice-details', (req, res, next) => {
-  res.render('apps-invoice-details', {title: 'Invoice Details'});
-})
-
-route.get('/apps-invoices', (req, res, next) => {
-  res.render('apps-invoices', {title: 'Invoices'});
-})
-
-route.get('/apps-kanban', (req, res, next) => {
-  res.render('apps-kanban', {title: 'Kanban Board'});
-})
-
-route.get('/apps-projects', (req, res, next) => {
-  res.render('apps-projects', {title: 'Projects'});
-})
-
-route.get('/apps-task-details', (req, res, next) => {
-  res.render('apps-task-details', {title: 'Task Details'});
-})
-
-route.get('/apps-tickets', (req, res, next) => {
-  res.render('apps-tickets', {title: 'Tickets'});
-})
-
-route.get('/apps-user-contacts', (req, res, next) => {
-  res.render('apps-user-contacts', {title: 'User Contacts'});
-})
-
-route.get('/apps-user-profile', (req, res, next) => {
-  res.render('apps-user-profile', {title: 'User Profile'});
-})
-
-route.get('/auth-confirm-mail', (req, res, next) => {
-  res.render('auth-confirm-mail', {title: 'Confirm Mail' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-createpw', (req, res, next) => {
-  res.render('auth-createpw', {title: 'Create Password' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-lock-screen', (req, res, next) => {
-  res.render('auth-lock-screen', {title: 'Lock Screen' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-login-pin', (req, res, next) => {
-  res.render('auth-login-pin', {title: 'Login Pin' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-login', (req, res, next) => {
-  res.render('auth-login', {title: 'Login' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-logout', (req, res, next) => {
-  res.render('auth-logout', {title: 'Logout' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-recoverpw', (req, res, next) => {
-  res.render('auth-recoverpw', {title: 'Recover Password' , layout: 'partials/base-layout'});
-})
-
-route.get('/auth-register', (req, res, next) => {
-  res.render('auth-register', {title: 'Sign Up' , layout: 'partials/base-layout'});
-})
-
-route.get('/charts-apex-area', (req, res, next) => {
-  res.render('charts-apex-area', {title: 'Area Charts'});
-})
-
-route.get('/charts-apex-bar', (req, res, next) => {
-  res.render('charts-apex-bar', {title: 'Bar Charts'});
-})
-
-route.get('/charts-apex-boxplot', (req, res, next) => {
-  res.render('charts-apex-boxplot', {title: 'Boxplot Charts'});
-})
-
-route.get('/charts-apex-bubble', (req, res, next) => {
-  res.render('charts-apex-bubble', {title: 'Bubble Charts'});
-})
-
-route.get('/charts-apex-candlestick', (req, res, next) => {
-  res.render('charts-apex-candlestick', {title: 'Candlestick Charts'});
-})
-
-route.get('/charts-apex-column', (req, res, next) => {
-  res.render('charts-apex-column', {title: 'Column Charts'});
-})
-
-route.get('/charts-apex-funnel', (req, res, next) => {
-  res.render('charts-apex-funnel', {title: 'Funnel Charts' , subtitle: 'Apex'});
-})
-
-route.get('/charts-apex-heatmap', (req, res, next) => {
-  res.render('charts-apex-heatmap', {title: 'Heatmap Charts'});
-})
-
-route.get('/charts-apex-line', (req, res, next) => {
-  res.render('charts-apex-line', {title: 'Line Charts'});
-})
-
-route.get('/charts-apex-mixed', (req, res, next) => {
-  res.render('charts-apex-mixed', {title: 'Mixed Charts'});
-})
-
-route.get('/charts-apex-pie', (req, res, next) => {
-  res.render('charts-apex-pie', {title: 'Pie Charts'});
-})
-
-route.get('/charts-apex-polar-area', (req, res, next) => {
-  res.render('charts-apex-polar-area', {title: 'Polar Area Charts'});
-})
-
-route.get('/charts-apex-radar', (req, res, next) => {
-  res.render('charts-apex-radar', {title: 'Radar Charts'});
-})
-
-route.get('/charts-apex-radialbar', (req, res, next) => {
-  res.render('charts-apex-radialbar', {title: 'Radialbar Charts'});
-})
-
-route.get('/charts-apex-scatter', (req, res, next) => {
-  res.render('charts-apex-scatter', {title: 'Scatter Charts'});
-})
-
-route.get('/charts-apex-slope', (req, res, next) => {
-  res.render('charts-apex-slope', {title: 'Slope Charts' ,  subtitle: 'Apex'});
-})
-
-route.get('/charts-apex-sparklines', (req, res, next) => {
-  res.render('charts-apex-sparklines', {title: 'Sparklines Charts'});
-})
-
-route.get('/charts-apex-timeline', (req, res, next) => {
-  res.render('charts-apex-timeline', {title: 'Timeline Charts'});
-})
-
-route.get('/charts-apex-treemap', (req, res, next) => {
-  res.render('charts-apex-treemap', {title: 'Treemap Charts'});
-})
-
-route.get('/error-400', (req, res, next) => {
-  res.render('error-400', {title: 'Error 400' , layout: 'partials/base-layout'});
-})
-
-route.get('/error-401', (req, res, next) => {
-  res.render('error-401', {title: 'Error 401' , layout: 'partials/base-layout'});
-})
-
-route.get('/error-403', (req, res, next) => {
-  res.render('error-403', {title: 'Error 403' , layout: 'partials/base-layout'});
-})
-
-route.get('/error-404-alt', (req, res, next) => {
-  res.render('error-404-alt', {title: 'Error 404'});
-})
-
-route.get('/error-404', (req, res, next) => {
-  res.render('error-404', {title: 'Error 404' , layout: 'partials/base-layout'});
-})
-
-route.get('/error-500', (req, res, next) => {
-  res.render('error-500', {title: 'Error 500' , layout: 'partials/base-layout'});
-})
-
-route.get('/error-service-unavailable', (req, res, next) => {
-  res.render('error-service-unavailable', {title: 'Error 408' , layout: 'partials/base-layout'});
-})
-
-route.get('/extended-dragula', (req, res, next) => {
-  res.render('extended-dragula', {title: 'Dragula'});
-})
-
-route.get('/extended-ratings', (req, res, next) => {
-  res.render('extended-ratings', {title: 'Ratings'});
-})
-
-route.get('/extended-scrollbar', (req, res, next) => {
-  res.render('extended-scrollbar', {title: 'Scrollbar'});
-})
-
-route.get('/extended-sweetalerts', (req, res, next) => {
-  res.render('extended-sweetalerts', {title: 'Sweet Alerts'});
-})
-
-route.get('/form-editors', (req, res, next) => {
-  res.render('form-editors', {title: 'Editors'});
-})
-
-route.get('/form-elements', (req, res, next) => {
-  res.render('form-elements', {title: 'Form Elements'});
-})
-
-route.get('/form-fileuploads', (req, res, next) => {
-  res.render('form-fileuploads', {title: 'Fileuploads'});
-})
-
-route.get('/form-inputmask', (req, res, next) => {
-  res.render('form-inputmask', {title: 'Inputmask'});
-})
-
-route.get('/form-layouts', (req, res, next) => {
-  res.render('form-layouts', {title: 'Layouts'});
-})
-
-route.get('/form-picker', (req, res, next) => {
-  res.render('form-picker', {title: 'Picker'});
-})
-
-route.get('/form-range-slider', (req, res, next) => {
-  res.render('form-range-slider', {title: 'Range Slider'});
-})
-
-route.get('/form-select', (req, res, next) => {
-  res.render('form-select', {title: 'Select'});
-})
-
-route.get('/form-validation', (req, res, next) => {
-  res.render('form-validation', {title: 'Validation'});
-})
-
-route.get('/form-wizard', (req, res, next) => {
-  res.render('form-wizard', {title: 'Wizard'});
-})
-
-route.get('/icons-remix', (req, res, next) => {
-  res.render('icons-remix', {title: 'Remixicon'});
-})
-
-route.get('/icons-solar', (req, res, next) => {
-  res.render('icons-solar', {title: 'Solar Icons'});
-})
-
-route.get('/icons-tabler', (req, res, next) => {
-  res.render('icons-tabler', {title: 'Tabler Icons'});
-})
-
-route.get('/index', (req, res, next) => {
-  res.render('index', {title: 'Dashboard'});
-})
-
-route.get('/layouts-compact', (req, res, next) => {
-  res.render('layouts-compact', {title: 'Compact'});
-})
-
-route.get('/layouts-detached', (req, res, next) => {
-  res.render('layouts-detached', {title: 'Detached'});
-})
-
-route.get('/layouts-full', (req, res, next) => {
-  res.render('layouts-full', {title: 'Full Layouts'});
-})
-
-route.get('/layouts-fullscreen', (req, res, next) => {
-  res.render('layouts-fullscreen', {title: 'Fullscreen'});
-})
-
-route.get('/layouts-horizontal', (req, res, next) => {
-  res.render('layouts-horizontal', {title: 'Horizontal Layout' , layout: 'partials/base-layout'});
-})
-
-route.get('/layouts-hover', (req, res, next) => {
-  res.render('layouts-hover', {title: 'Hover'});
-})
-
-route.get('/layouts-icon-view', (req, res, next) => {
-  res.render('layouts-icon-view', {title: 'Icon View'});
-})
-
-route.get('/maps-google', (req, res, next) => {
-  res.render('maps-google', {title: 'Google Maps' });
-})
-
-route.get('/maps-leaflet', (req, res, next) => {
-  res.render('maps-leaflet', {title: 'Leaflet Maps'});
-})
-
-route.get('/maps-vector', (req, res, next) => {
-  res.render('maps-vector', {title: 'Vector Maps' });
-})
-
-route.get('/pages-coming-soon', (req, res, next) => {
-  res.render('pages-coming-soon', {title: 'Coming Soon' , layout: 'partials/base-layout'});
-})
-
-route.get('/pages-faq', (req, res, next) => {
-  res.render('pages-faq', {title: 'Faq'});
-})
-
-route.get('/pages-maintenance', (req, res, next) => {
-  res.render('pages-maintenance', {title: 'Maintenance' , layout: 'partials/base-layout'});
-})
-
-route.get('/pages-pricing', (req, res, next) => {
-  res.render('pages-pricing', {title: 'Pricing'});
-})
-
-route.get('/pages-starter', (req, res, next) => {
-  res.render('pages-starter', {title: 'Starter Page'});
-})
-
-route.get('/pages-terms-conditions', (req, res, next) => {
-  res.render('pages-terms-conditions', {title: 'Terms & Conditions'});
-})
-
-route.get('/pages-timeline', (req, res, next) => {
-  res.render('pages-timeline', {title: 'Timeline'});
-})
-
-route.get('/tables-basic', (req, res, next) => {
-  res.render('tables-basic', {title: 'Basic Tables '});
-})
-
-route.get('/tables-datatable', (req, res, next) => {
-  res.render('tables-datatable', {title: 'Datatable Tables '});
-})
-
-route.get('/tables-gridjs', (req, res, next) => {
-  res.render('tables-gridjs', {title: 'Gridjs Tables '});
-})
-
-route.get('/ui-accordions', (req, res, next) => {
-  res.render('ui-accordions', {title: 'Accordions'});
-})
-
-route.get('/ui-alerts', (req, res, next) => {
-  res.render('ui-alerts', {title: 'Alerts'});
-})
-
-route.get('/ui-avatars', (req, res, next) => {
-  res.render('ui-avatars', {title: 'Avatars'});
-})
-
-route.get('/ui-badges', (req, res, next) => {
-  res.render('ui-badges', {title: 'Badges'});
-})
-
-route.get('/ui-breadcrumb', (req, res, next) => {
-  res.render('ui-breadcrumb', {title: 'Breadcrumb'});
-})
-
-route.get('/ui-buttons', (req, res, next) => {
-  res.render('ui-buttons', {title: 'Buttons'});
-})
-
-route.get('/ui-cards', (req, res, next) => {
-  res.render('ui-cards', {title: 'Cards'});
-})
-
-route.get('/ui-carousel', (req, res, next) => {
-  res.render('ui-carousel', {title: 'Carousel'});
-})
-
-route.get('/ui-collapse', (req, res, next) => {
-  res.render('ui-collapse', {title: 'Collapse'});
-})
-
-route.get('/ui-dropdowns', (req, res, next) => {
-  res.render('ui-dropdowns', {title: 'Dropdowns'});
-})
-
-route.get('/ui-embed-video', (req, res, next) => {
-  res.render('ui-embed-video', {title: 'Embed Video'});
-})
-
-route.get('/ui-grid', (req, res, next) => {
-  res.render('ui-grid', {title: 'Grid'});
-})
-
-route.get('/ui-links', (req, res, next) => {
-  res.render('ui-links', {title: 'Links'});
-})
-
-route.get('/ui-list-group', (req, res, next) => {
-  res.render('ui-list-group', {title: 'List Group'});
-})
-
-route.get('/ui-modals', (req, res, next) => {
-  res.render('ui-modals', {title: 'Modals'});
-})
-
-route.get('/ui-notifications', (req, res, next) => {
-  res.render('ui-notifications', {title: 'Notifications'});
-})
-
-route.get('/ui-offcanvas', (req, res, next) => {
-  res.render('ui-offcanvas', {title: 'Offcanvas'});
-})
-
-route.get('/ui-pagination', (req, res, next) => {
-  res.render('ui-pagination', {title: 'Pagination'});
-})
-
-route.get('/ui-placeholders', (req, res, next) => {
-  res.render('ui-placeholders', {title: 'Placeholders'});
-})
-
-route.get('/ui-popovers', (req, res, next) => {
-  res.render('ui-popovers', {title: 'Popovers'});
-})
-
-route.get('/ui-progress', (req, res, next) => {
-  res.render('ui-progress', {title: 'Progress'});
-})
-
-route.get('/ui-ratios', (req, res, next) => {
-  res.render('ui-ratios', {title: 'Ratios'});
-})
-
-route.get('/ui-scrollspy', (req, res, next) => {
-  res.render('ui-scrollspy', {title: 'Scrollspy'});
-})
-
-route.get('/ui-spinners', (req, res, next) => {
-  res.render('ui-spinners', {title: 'Spinners'});
-})
-
-route.get('/ui-tabs', (req, res, next) => {
-  res.render('ui-tabs', {title: 'Tabs'});
-})
-
-route.get('/ui-tooltips', (req, res, next) => {
-  res.render('ui-tooltips', {title: 'Tooltips'});
-})
-
-route.get('/ui-typography', (req, res, next) => {
-  res.render('ui-typography', {title: 'Typography'});
-})
-
-route.get('/ui-utilities', (req, res, next) => {
-  res.render('ui-utilities', {title: 'Utilities'});
-})
-
-route.get('/widgets', (req, res, next) => {
-  res.render('widgets', {title: 'Widgets'});
-})
-
-module.exports = route
+// ============================================================================
+// 2. MIDDLEWARE DI PROTEZIONE
+// ============================================================================
+route.use(requireAuth);
+
+// ============================================================================
+// 3. ROTTE PROTETTE (Richiedono Login)
+// ============================================================================
+
+// Dashboard Principale
+route.get('/', (req, res) => res.render('index', { title: 'Dashboard' }));
+route.get('/index', (req, res) => res.render('index', { title: 'Dashboard' }));
+
+// API
+route.get('/api/servizi/products', serviceController.getProducts);
+route.get('/api/leads/all', leadController.getLeads);
+
+const pagesConfig = [
+    // Apps
+    { path: '/apps-service', title: 'Servizi' },
+    { path: '/apps-leads', title: 'Lead' },
+    { path: '/apps-invoice-create', title: 'Invoice Create' },
+    { path: '/apps-invoice-details', title: 'Invoice Details' },
+    { path: '/apps-invoices', title: 'Invoices' },
+    { path: '/apps-projects', title: 'Projects' },
+    { path: '/apps-tickets', title: 'Tickets' },
+    { path: '/apps-user-contacts', title: 'User Contacts' },
+    { path: '/apps-user-profile', title: 'User Profile' },
+
+    // Charts
+    { path: '/charts-apex-area', title: 'Area Charts' },
+    { path: '/charts-apex-bar', title: 'Bar Charts' },
+    { path: '/charts-apex-boxplot', title: 'Boxplot Charts' },
+    { path: '/charts-apex-bubble', title: 'Bubble Charts' },
+    { path: '/charts-apex-candlestick', title: 'Candlestick Charts' },
+    { path: '/charts-apex-column', title: 'Column Charts' },
+    { path: '/charts-apex-funnel', title: 'Funnel Charts', subtitle: 'Apex' },
+    { path: '/charts-apex-heatmap', title: 'Heatmap Charts' },
+    { path: '/charts-apex-line', title: 'Line Charts' },
+    { path: '/charts-apex-mixed', title: 'Mixed Charts' },
+    { path: '/charts-apex-pie', title: 'Pie Charts' },
+    { path: '/charts-apex-polar-area', title: 'Polar Area Charts' },
+    { path: '/charts-apex-radar', title: 'Radar Charts' },
+    { path: '/charts-apex-radialbar', title: 'Radialbar Charts' },
+    { path: '/charts-apex-scatter', title: 'Scatter Charts' },
+    { path: '/charts-apex-slope', title: 'Slope Charts', subtitle: 'Apex' },
+    { path: '/charts-apex-sparklines', title: 'Sparklines Charts' },
+    { path: '/charts-apex-timeline', title: 'Timeline Charts' },
+    { path: '/charts-apex-treemap', title: 'Treemap Charts' },
+
+    // Errors
+    { path: '/error-404-alt', title: 'Error 404' },
+
+    // Extended UI
+    { path: '/extended-dragula', title: 'Dragula' },
+    { path: '/extended-ratings', title: 'Ratings' },
+    { path: '/extended-scrollbar', title: 'Scrollbar' },
+    { path: '/extended-sweetalerts', title: 'Sweet Alerts' },
+
+    // Forms
+    { path: '/form-editors', title: 'Editors' },
+    { path: '/form-elements', title: 'Form Elements' },
+    { path: '/form-fileuploads', title: 'Fileuploads' },
+    { path: '/form-inputmask', title: 'Inputmask' },
+    { path: '/form-layouts', title: 'Layouts' },
+    { path: '/form-picker', title: 'Picker' },
+    { path: '/form-range-slider', title: 'Range Slider' },
+    { path: '/form-select', title: 'Select' },
+    { path: '/form-validation', title: 'Validation' },
+    { path: '/form-wizard', title: 'Wizard' },
+
+    // Icons
+    { path: '/icons-remix', title: 'Remixicon' },
+    { path: '/icons-solar', title: 'Solar Icons' },
+    { path: '/icons-tabler', title: 'Tabler Icons' },
+
+    // Layouts
+    { path: '/layouts-compact', title: 'Compact' },
+    { path: '/layouts-detached', title: 'Detached' },
+    { path: '/layouts-full', title: 'Full Layouts' },
+    { path: '/layouts-fullscreen', title: 'Fullscreen' },
+    { path: '/layouts-hover', title: 'Hover' },
+    { path: '/layouts-icon-view', title: 'Icon View' },
+
+    // Maps
+    { path: '/maps-google', title: 'Google Maps' },
+    { path: '/maps-leaflet', title: 'Leaflet Maps' },
+    { path: '/maps-vector', title: 'Vector Maps' },
+
+    // Pages
+    { path: '/pages-faq', title: 'Faq' },
+    { path: '/pages-pricing', title: 'Pricing' },
+    { path: '/pages-starter', title: 'Starter Page' },
+    { path: '/pages-terms-conditions', title: 'Terms & Conditions' },
+    { path: '/pages-timeline', title: 'Timeline' },
+
+    // Tables
+    { path: '/tables-basic', title: 'Basic Tables' },
+    { path: '/tables-datatable', title: 'Datatable Tables' },
+    { path: '/tables-gridjs', title: 'Gridjs Tables' },
+
+    // UI Elements
+    { path: '/ui-accordions', title: 'Accordions' },
+    { path: '/ui-alerts', title: 'Alerts' },
+    { path: '/ui-avatars', title: 'Avatars' },
+    { path: '/ui-badges', title: 'Badges' },
+    { path: '/ui-breadcrumb', title: 'Breadcrumb' },
+    { path: '/ui-buttons', title: 'Buttons' },
+    { path: '/ui-cards', title: 'Cards' },
+    { path: '/ui-carousel', title: 'Carousel' },
+    { path: '/ui-collapse', title: 'Collapse' },
+    { path: '/ui-dropdowns', title: 'Dropdowns' },
+    { path: '/ui-embed-video', title: 'Embed Video' },
+    { path: '/ui-grid', title: 'Grid' },
+    { path: '/ui-links', title: 'Links' },
+    { path: '/ui-list-group', title: 'List Group' },
+    { path: '/ui-modals', title: 'Modals' },
+    { path: '/ui-notifications', title: 'Notifications' },
+    { path: '/ui-offcanvas', title: 'Offcanvas' },
+    { path: '/ui-pagination', title: 'Pagination' },
+    { path: '/ui-placeholders', title: 'Placeholders' },
+    { path: '/ui-popovers', title: 'Popovers' },
+    { path: '/ui-progress', title: 'Progress' },
+    { path: '/ui-ratios', title: 'Ratios' },
+    { path: '/ui-scrollspy', title: 'Scrollspy' },
+    { path: '/ui-spinners', title: 'Spinners' },
+    { path: '/ui-tabs', title: 'Tabs' },
+    { path: '/ui-tooltips', title: 'Tooltips' },
+    { path: '/ui-typography', title: 'Typography' },
+    { path: '/ui-utilities', title: 'Utilities' },
+    { path: '/widgets', title: 'Widgets' },
+];
+
+// Generazione automatica rotte statiche
+pagesConfig.forEach(page => {
+    route.get(page.path, (req, res) => {
+        res.render(page.path.substring(1), { 
+            title: page.title,
+            subtitle: page.subtitle || undefined 
+        });
+    });
+});
+
+module.exports = route;

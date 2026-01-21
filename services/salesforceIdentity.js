@@ -1,5 +1,8 @@
 const fetchFn = global.fetch;
 
+// Configurazioni di default
+const DEFAULT_TIMEOUT_MS = 10000;
+
 async function jsonOrEmpty(resp) {
   return resp.json().catch(() => ({}));
 }
@@ -8,7 +11,7 @@ function isPlainObject(v) {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
 }
 
-async function fetchJsonWithTimeout(url, { accessToken, timeoutMs = 10000 } = {}) {
+async function fetchJsonWithTimeout(url, { accessToken, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   if (!fetchFn) {
     throw new Error('fetch non disponibile. Usa Node 18+ oppure installa node-fetch.');
   }
@@ -45,7 +48,7 @@ async function fetchSalesforceIdentity({ identityUrl, accessToken }) {
   if (!identityUrl) throw new Error('identityUrl mancante');
   if (!accessToken) throw new Error('accessToken mancante');
 
-  return fetchJsonWithTimeout(identityUrl, { accessToken, timeoutMs: 10000 });
+  return fetchJsonWithTimeout(identityUrl, { accessToken });
 }
 
 async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion, userId }) {
@@ -54,73 +57,47 @@ async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion,
   if (!apiVersion) throw new Error('apiVersion mancante');
   if (!userId) throw new Error('userId mancante');
 
-  const url = new URL(
-    `/services/data/v${apiVersion}/sobjects/User/${encodeURIComponent(userId)}`,
-    instanceUrl
-  );
+  const getUrl = (fields) => {
+    const u = new URL(
+      `/services/data/v${apiVersion}/sobjects/User/${encodeURIComponent(userId)}`,
+      instanceUrl
+    );
+    u.searchParams.set('fields', fields.join(','));
+    return u.toString();
+  };
 
-  url.searchParams.set(
-    'fields',
-    [
-      'Id',
-      'Name',
-      'FirstName',
-      'LastName',
-      'Username',
-      'Email',
-      'Title',
-      'Department',
-      'SmallPhotoUrl',
-      'FullPhotoUrl',
-      'Profile.Name',
-      'UserRole.Name',
-    ].join(',')
-  );
+  const fieldsFull = [
+    'Id', 'Name', 'FirstName', 'LastName', 'Username', 'Email',
+    'Title', 'Department', 'SmallPhotoUrl', 'FullPhotoUrl',
+    'Profile.Name', 'UserRole.Name'
+  ];
+
+  const fieldsSafe = [
+    'Id', 'Name', 'FirstName', 'LastName', 'Username', 'Email',
+    'Title', 'Department', 'SmallPhotoUrl', 'FullPhotoUrl'
+  ];
 
   try {
-    const data = await fetchJsonWithTimeout(url.toString(), { accessToken, timeoutMs: 10000 });
+    const data = await fetchJsonWithTimeout(getUrl(fieldsFull), { accessToken });
 
     if (!isPlainObject(data) || !data.Id) {
       const err = new Error('Salesforce User record not found');
       err.details = data;
       throw err;
     }
-
     return data;
   } catch (err) {
+    // Fallback: se fallisce, riprova con campi ridotti
     if (err && err.status === 400) {
-      const url2 = new URL(
-        `/services/data/v${apiVersion}/sobjects/User/${encodeURIComponent(userId)}`,
-        instanceUrl
-      );
-
-      url2.searchParams.set(
-        'fields',
-        [
-          'Id',
-          'Name',
-          'FirstName',
-          'LastName',
-          'Username',
-          'Email',
-          'Title',
-          'Department',
-          'SmallPhotoUrl',
-          'FullPhotoUrl',
-        ].join(',')
-      );
-
-      const data2 = await fetchJsonWithTimeout(url2.toString(), { accessToken, timeoutMs: 10000 });
-
+      const data2 = await fetchJsonWithTimeout(getUrl(fieldsSafe), { accessToken });
+      
       if (!isPlainObject(data2) || !data2.Id) {
-        const e2 = new Error('Salesforce User record not found');
+        const e2 = new Error('Salesforce User record not found (retry)');
         e2.details = data2;
         throw e2;
       }
-
       return data2;
     }
-
     throw err;
   }
 }
@@ -145,26 +122,22 @@ function flattenUser({ identity, userRecord }) {
     // Foto
     photoSmallUrl:
       userRecord.SmallPhotoUrl ||
-      (identity.photos && identity.photos.thumbnail) ||
+      identity.photos?.thumbnail ||
       null,
     photoFullUrl:
       userRecord.FullPhotoUrl ||
-      (identity.photos && identity.photos.picture) ||
+      identity.photos?.picture ||
       null,
 
     // Qualifica
     title: userRecord.Title || null,
     department: userRecord.Department || null,
-    profileName: (userRecord.Profile && userRecord.Profile.Name) || null,
-    roleName: (userRecord.UserRole && userRecord.UserRole.Name) || null,
+    profileName: userRecord.Profile?.Name || null,
+    roleName: userRecord.UserRole?.Name || null,
   };
 
-  // Debug/extra: evita di salvare raw in produzione (privacy + session bloat)
   if (process.env.NODE_ENV !== 'production') {
-    user.raw = {
-      identity,
-      userRecord,
-    };
+    user.raw = { identity, userRecord };
   }
 
   return user;

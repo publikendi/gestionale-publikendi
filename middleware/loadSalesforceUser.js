@@ -2,7 +2,7 @@ const {
   fetchSalesforceIdentity,
   fetchSalesforceUserRecord,
   flattenUser,
-} = require('../services/salesforceIdentityService');
+} = require('../services/salesforceIdentity');
 
 module.exports = async function loadSalesforceUser(req, res, next) {
   try {
