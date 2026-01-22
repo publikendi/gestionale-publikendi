@@ -1,38 +1,73 @@
-console.log('Smile, if you ohk')
 const express = require('express');
-const app = express();
 const path = require('path');
-const route = require('./routes/route');
-const expressLayouts = require('express-ejs-layouts');
+const http = require('http');
+const dotenv = require('dotenv');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const expressLayouts = require('express-ejs-layouts');
 const upload = require('express-fileupload');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+const route = require('./routes/route');
 const loadSalesforceUser = require('./middleware/loadSalesforceUser');
-const dotenv = require('dotenv');
-dotenv.config({ path: "./config.env" });
 
-app.set('views', path.join(__dirname, '/views'));
-app.set('view engine', 'ejs');
-app.use(upload());
+dotenv.config();
 
+const app = express();
+app.set('trust proxy', 1);
+
+// SECURITY
+app.use(helmet());
+
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300
+}));
+
+// BODY
 app.use(express.json());
-app.use(session({ resave: false, saveUninitialized: true, secret: 'nodedemo' }));
+app.use(express.urlencoded({ extended: false }));
+
+// FILE UPLOAD
+app.use(upload({
+  limits: { fileSize: 5 * 1024 * 1024 },
+  abortOnLimit: true,
+  safeFileNames: true,
+  preserveExtension: true
+}));
+
+// SESSION
 app.use(cookieParser());
+app.use(session({
+  name: 'publikendi.sid',
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 60 * 8
+  }
+}));
 
-app.use(loadSalesforceUser);
-
+// VIEWS
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 app.set('layout', 'partials/layout-vertical');
 app.use(expressLayouts);
 
-app.use(express.static(__dirname + '/public'));
+// STATIC
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', route);
+// ROUTES
+app.use('/', loadSalesforceUser, route);
 
-const http = require("http").createServer(app);
+// SERVER
+const server = http.createServer(app);
+const port = process.env.PORT || 3000;
 
-const port = 3000
-
-http.listen(port, () => {
-    console.log(`Server running on port ${port}`)
-    console.log(`http://localhost:${port}`)
+server.listen(port, () => {
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });

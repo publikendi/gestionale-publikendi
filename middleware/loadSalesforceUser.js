@@ -4,48 +4,72 @@ const {
   flattenUser,
 } = require('../services/salesforceIdentity');
 
+const { sfFetchWithAutoRefresh } = require('../services/sfFetchWithAutoRefresh');
+
+const USER_CACHE_TTL_MS = 5 * 60 * 1000;
+
 module.exports = async function loadSalesforceUser(req, res, next) {
   try {
-    if (!(req.session && req.session.isAuthenticated)) return next();
+    if (!req.session?.isAuthenticated) return next();
 
     const sf = req.session.salesforce;
-    if (!sf || !sf.accessToken || !sf.identityUrl) {
+    if (!sf?.accessToken || !sf.identityUrl) {
       return req.session.destroy(() => res.redirect('/auth-login'));
     }
 
-    const apiVersion = process.env.SALESFORCE_API_VERSION || '59.0';
+    const now = Date.now();
 
-    try {
-      const identity = await fetchSalesforceIdentity({
-        identityUrl: sf.identityUrl,
-        accessToken: sf.accessToken,
-      });
-
-      if (!req.session.user) {
-        const userRecord = await fetchSalesforceUserRecord({
-          instanceUrl: sf.instanceUrl,
-          accessToken: sf.accessToken,
-          apiVersion,
-          userId: identity.user_id,
-        });
-        req.session.user = flattenUser({ identity, userRecord });
-      }
-
+    if (
+      req.session.user &&
+      req.session.userCachedAt &&
+      now - req.session.userCachedAt < USER_CACHE_TTL_MS
+    ) {
       res.locals.user = req.session.user;
       return next();
-
-    } catch (err) {
-      if (err.status === 401) {
-        console.warn('Sessione Salesforce non più valida. Logout in corso...');
-        return req.session.destroy(() => {
-          res.clearCookie('connect.sid'); 
-          res.redirect('/auth-login');
-        });
-      }
-      throw err;
     }
-  } catch (err) {
-    console.error('Errore nel middleware di validazione:', err.message);
+
+    const identity = await sfFetchWithAutoRefresh({
+      req,
+      fetchFn: () =>
+        fetchSalesforceIdentity({
+          identityUrl: sf.identityUrl,
+          accessToken: sf.accessToken,
+        }),
+      buildRequest: (newToken) =>
+        fetchSalesforceIdentity({
+          identityUrl: sf.identityUrl,
+          accessToken: newToken,
+        }),
+    });
+
+    const userRecord = await sfFetchWithAutoRefresh({
+      req,
+      fetchFn: () =>
+        fetchSalesforceUserRecord({
+          instanceUrl: sf.instanceUrl,
+          accessToken: sf.accessToken,
+          apiVersion: process.env.SALESFORCE_API_VERSION || '59.0',
+          userId: identity.user_id,
+        }),
+      buildRequest: (newToken) =>
+        fetchSalesforceUserRecord({
+          instanceUrl: sf.instanceUrl,
+          accessToken: newToken,
+          apiVersion: process.env.SALESFORCE_API_VERSION || '59.0',
+          userId: identity.user_id,
+        }),
+    });
+
+    req.session.user = flattenUser({ identity, userRecord });
+    req.session.userCachedAt = now;
+
+    res.locals.user = req.session.user;
     next();
+
+  } catch (err) {
+    if (err.status === 401) {
+      return req.session.destroy(() => res.redirect('/auth-login'));
+    }
+    next(err);
   }
 };
