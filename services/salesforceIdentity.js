@@ -1,6 +1,4 @@
 const fetchFn = global.fetch;
-
-// Configurazioni di default
 const DEFAULT_TIMEOUT_MS = 10000;
 
 async function jsonOrEmpty(resp) {
@@ -87,7 +85,6 @@ async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion,
     }
     return data;
   } catch (err) {
-    // Fallback: se fallisce, riprova con campi ridotti
     if (err && err.status === 400) {
       const data2 = await fetchJsonWithTimeout(getUrl(fieldsSafe), { accessToken });
       
@@ -104,11 +101,9 @@ async function fetchSalesforceUserRecord({ instanceUrl, accessToken, apiVersion,
 
 function flattenUser({ identity, userRecord }) {
   const user = {
-    // Identity 
     sfIdentityIdUrl: identity.id,
     sfUserId: identity.user_id,
     sfOrgId: identity.organization_id,
-
     displayName: identity.display_name,
     nickName: identity.nick_name,
     username: identity.username,
@@ -118,8 +113,6 @@ function flattenUser({ identity, userRecord }) {
     locale: identity.locale,
     language: identity.language,
     timezone: identity.timezone,
-
-    // Foto
     photoSmallUrl:
       userRecord.SmallPhotoUrl ||
       identity.photos?.thumbnail ||
@@ -128,8 +121,6 @@ function flattenUser({ identity, userRecord }) {
       userRecord.FullPhotoUrl ||
       identity.photos?.picture ||
       null,
-
-    // Qualifica
     title: userRecord.Title || null,
     department: userRecord.Department || null,
     profileName: userRecord.Profile?.Name || null,

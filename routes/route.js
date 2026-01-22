@@ -3,6 +3,7 @@ const route = express.Router();
 
 // Middleware
 const requireAuth = require('../middleware/requireAuth');
+const loadSalesforceUser = require('../middleware/loadSalesforceUser');
 
 // Controller
 const authController = require('../controllers/authController');
@@ -51,6 +52,7 @@ authPages.forEach(page => {
 // 2. MIDDLEWARE DI PROTEZIONE
 // ============================================================================
 route.use(requireAuth);
+route.use(loadSalesforceUser);
 
 // ============================================================================
 // 3. ROTTE PROTETTE (Richiedono Login)

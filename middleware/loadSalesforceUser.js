@@ -8,13 +8,8 @@ module.exports = async function loadSalesforceUser(req, res, next) {
   try {
     if (!(req.session && req.session.isAuthenticated)) return next();
 
-    if (req.session.user) {
-      res.locals.user = req.session.user;
-      return next();
-    }
-
     const sf = req.session.salesforce;
-    if (!sf || !sf.accessToken || !sf.instanceUrl || !sf.identityUrl) {
+    if (!sf || !sf.accessToken || !sf.identityUrl) {
       return req.session.destroy(() => res.redirect('/auth-login'));
     }
 
@@ -26,31 +21,31 @@ module.exports = async function loadSalesforceUser(req, res, next) {
         accessToken: sf.accessToken,
       });
 
-      const userRecord = await fetchSalesforceUserRecord({
-        instanceUrl: sf.instanceUrl,
-        accessToken: sf.accessToken,
-        apiVersion,
-        userId: identity.user_id,
-      });
+      if (!req.session.user) {
+        const userRecord = await fetchSalesforceUserRecord({
+          instanceUrl: sf.instanceUrl,
+          accessToken: sf.accessToken,
+          apiVersion,
+          userId: identity.user_id,
+        });
+        req.session.user = flattenUser({ identity, userRecord });
+      }
 
-      const user = flattenUser({ identity, userRecord });
-      req.session.user = user;
-      res.locals.user = user;
+      res.locals.user = req.session.user;
       return next();
 
     } catch (err) {
-      // Gestione specifica per sessione scaduta (401)
       if (err.status === 401) {
-        console.warn('[loadSalesforceUser] Salesforce Session Expired. Redirecting to login.');
+        console.warn('Sessione Salesforce non più valida. Logout in corso...');
         return req.session.destroy(() => {
+          res.clearCookie('connect.sid'); 
           res.redirect('/auth-login');
         });
       }
       throw err;
     }
-
   } catch (err) {
-    console.error('[loadSalesforceUser] Error:', err.message);
+    console.error('Errore nel middleware di validazione:', err.message);
     next();
   }
 };

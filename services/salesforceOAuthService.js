@@ -1,22 +1,18 @@
 const crypto = require("crypto");
 const fetchFn = global.fetch;
 
-// Genera un PKCE code_verifier (stringa) conforme: 43-128 caratteri.
 function generateCodeVerifier() {
   return crypto.randomBytes(32).toString("base64url");
 }
 
-// Genera code_challenge = BASE64URL-ENCODE(SHA256(code_verifier))
 function generateCodeChallenge(verifier) {
   return crypto.createHash("sha256").update(verifier).digest("base64url");
 }
 
-// Genera uno state per prevenire CSRF.
 function generateState() {
   return crypto.randomBytes(16).toString("base64url");
 }
 
-// Costruisce la URL di authorize di Salesforce.
 function buildAuthorizeUrl({
   baseUrl,
   clientId,
@@ -30,21 +26,14 @@ function buildAuthorizeUrl({
   authorizeUrl.searchParams.set("response_type", "code");
   authorizeUrl.searchParams.set("client_id", clientId);
   authorizeUrl.searchParams.set("redirect_uri", redirectUri);
-
-  // PKCE
   authorizeUrl.searchParams.set("code_challenge", codeChallenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
-
-  // Sicurezza
   authorizeUrl.searchParams.set("state", state);
-
-  // Scope (minimo)
   if (scope) authorizeUrl.searchParams.set("scope", scope);
 
   return authorizeUrl.toString();
 }
 
-// Scambia authorization code -> token (OAuth token endpoint).
 async function exchangeCodeForToken({
   baseUrl,
   clientId,
