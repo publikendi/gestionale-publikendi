@@ -6,8 +6,6 @@ const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 const upload = require('express-fileupload');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 
 const route = require('./routes/route');
 const loadSalesforceUser = require('./middleware/loadSalesforceUser');
@@ -16,14 +14,6 @@ dotenv.config();
 
 const app = express();
 app.set('trust proxy', 1);
-
-// SECURITY
-app.use(helmet());
-
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300
-}));
 
 // BODY
 app.use(express.json());
