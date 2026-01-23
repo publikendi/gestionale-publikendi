@@ -1,0 +1,80 @@
+<%- contentFor('html_attribute') %>
+
+<%- contentFor('extra_css') %>
+<!-- gridjs css -->
+<link rel="stylesheet" href="/vendor/gridjs/theme/mermaid.min.css" />
+
+<%- contentFor('body_attribute') %>
+
+<%- contentFor('content') %>
+
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header border-bottom border-dashed d-flex align-items-center">
+        <h4 class="card-title mb-0 flex-grow-1">Opportunita</h4>
+        <div class="text-muted fs-13">
+          <div id="opportunity-status">Caricamento...</div>
+        </div>
+      </div><!-- end card header -->
+
+      <div class="card-body">
+        <div id="table-gridjs"></div>
+
+        <!-- Opportunity details modal -->
+        <div
+          class="modal fade"
+          id="opportunityDetailsModal"
+          tabindex="-1"
+          aria-labelledby="opportunityDetailsModalLabel"
+          aria-hidden="true"
+        >
+          <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="opportunityDetailsModalLabel">Dettaglio Opportunità</h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Chiudi"
+                ></button>
+              </div>
+
+              <div class="modal-body">
+                <dl class="row mb-0">
+                  <dt class="col-sm-4">Nome Opportunità</dt>
+                  <dd class="col-sm-8" id="m-name"></dd>
+
+                  <dt class="col-sm-4">Nome Account</dt>
+                  <dd class="col-sm-8" id="m-name-account"></dd>
+
+                  <dt class="col-sm-4">Fase</dt>
+                  <dd class="col-sm-8" id="m-stage-name"></dd>
+
+                  <dt class="col-sm-4">Data Chiusura</dt>
+                  <dd class="col-sm-8" id="m-close-date"></dd>
+
+                </dl>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                  Chiudi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div><!-- end modal -->
+      </div><!-- end card-body -->
+    </div><!-- end card -->
+  </div><!-- end col -->
+</div><!-- end row -->
+
+<%- contentFor('extra_javascript') %>
+<script src="/vendor/gridjs/gridjs.umd.js"></script>
+<script src="/js/pages/apps-opportunity.js"></script><%- contentFor('html_attribute') %>
+
+<%- contentFor('extra_css') %>
+<!-- gridjs css -->
+<link rel="stylesheet" href="/vendor/gridjs/theme/mermaid.min.css" />
