@@ -6,7 +6,7 @@ exports.fetchLeads = async function fetchLeads({
   apiVersion,
 }) {
   const soql = `
-    SELECT Id, Name, Email, Company, Status, CreatedDate, Title, Phone
+    SELECT FirstName, LastName, Company, Phone, Email, Status, CreatedDate 
     FROM Lead
     WHERE IsDeleted = false
     ORDER BY CreatedDate DESC
@@ -21,13 +21,12 @@ exports.fetchLeads = async function fetchLeads({
   });
 
   return records.map((lead) => ({
-    id: lead.Id,
-    name: lead.Name ?? '',
-    email: lead.Email ?? '',
+    firstname: lead.FirstName ?? '',
+    lastname: lead.LastName ?? '',
     company: lead.Company ?? '',
-    status: lead.Status ?? '',
-    title: lead.Title ?? '',
     phone: lead.Phone ?? '',
+    email: lead.Email ?? '',
+    status: lead.Status ?? '',    
     createdDate: lead.CreatedDate,
   }));
 };

@@ -21,10 +21,10 @@
     }).format(value);
   }
 
-  // 2. GESTIONE CLICK
+  // 2. GESTIONE CLICK 
   tableWrapper.addEventListener('click', function(e) {
     const tr = e.target.closest('tr');
-    if (!tr) return;
+    if (!tr) return; 
 
     const firstCell = tr.querySelector('td'); 
     if(!firstCell) return;
@@ -66,6 +66,7 @@
         return;
       }
 
+      // Popola la mappa per il click
       rowsByCode.clear();
       records.forEach(r => {
         if(r.productCode) rowsByCode.set(r.productCode, r);
@@ -73,6 +74,7 @@
 
       if (statusEl) statusEl.textContent = ""; 
 
+      // Configura Grid.js
       new gridjs.Grid({
         columns: [
           { name: "Codice", width: "100px" }, 
@@ -102,6 +104,7 @@
         }
       }).render(tableWrapper);
 
+      // Aggiungiamo stile CSS dinamicamente per il cursore
       const style = document.createElement('style');
       style.innerHTML = `
         .cursor-pointer:hover { cursor: pointer; background-color: #f8f9fa; }

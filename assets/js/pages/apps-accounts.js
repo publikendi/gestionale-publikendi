@@ -1,13 +1,13 @@
 (function () {
-  const statusEl = document.getElementById('leads-status');
+  const statusEl = document.getElementById('accounts-status');
   const tableWrapper = document.getElementById('table-gridjs');
   
-  let rowsByEmail = new Map();
+  let rowsById = new Map();
 
   if (!tableWrapper) return;
 
   // 1. CONFIGURAZIONE MODAL
-  const modalEl = document.getElementById('leadDetailsModal');
+  const modalEl = document.getElementById('accountDetailsModal');
   let bsModal = null;
   if (modalEl && window.bootstrap) {
     bsModal = new window.bootstrap.Modal(modalEl);
@@ -22,8 +22,8 @@
     
     if (cells.length < 2) return; 
 
-    const email = cells[4].textContent.trim();
-    const record = rowsByEmail.get(email);
+    const id = cells[0].textContent.trim();
+    const record = rowsById.get(name);
 
     if (record) {
       openModal(record);
@@ -33,65 +33,45 @@
   function openModal(data) {
     if (!bsModal) return;
 
-    document.getElementById('m-nome').textContent = data.firstname || "-";
-    document.getElementById('m-cognome').textContent = data.lastname || "-";
-    document.getElementById('m-azienda').textContent = data.company || "-";
+    document.getElementById('m-name').textContent = data.name || "-";
     document.getElementById('m-telefono').textContent = data.phone || "-"; 
-    document.getElementById('m-email').textContent = data.email || "-"; 
-    document.getElementById('m-stato').textContent = data.status || "-";
-    
-    const dateStr = data.createdDate 
-      ? new Date(data.createdDate).toLocaleDateString() + ' ' + new Date(data.createdDate).toLocaleTimeString()
-      : "-";
-    document.getElementById('m-data-creazione').textContent = dateStr;
-
+    document.getElementById('m-industry').textContent = data.industry || "-"; 
     bsModal.show();
   }
 
   // 3. INIT & FETCH DATI
   async function init() {
-    if (statusEl) statusEl.textContent = "Caricamento lead...";
+    if (statusEl) statusEl.textContent = "Caricamento Account...";
 
     try {
-      const response = await fetch('/api/leads/all');
+      const response = await fetch('/api/accounts/all');
       if (!response.ok) throw new Error('Errore nel caricamento');
       
       const data = await response.json();
       const records = data.records || [];
 
       if (!records.length) {
-        if (statusEl) statusEl.textContent = "Nessun lead trovato.";
+        if (statusEl) statusEl.textContent = "Nessun Account trovato.";
         return;
       }
 
-      rowsByEmail.clear();
+      rowsById.clear();
       records.forEach(r => {
-        if(r.email) rowsByEmail.set(r.email, r);
+        if(r.name) rowsById.set(r.name, r);
       });
 
-      if (statusEl) statusEl.textContent = `${records.length} lead trovati`;
+      if (statusEl) statusEl.textContent = `${records.length} account trovati`;
 
       new gridjs.Grid({
         columns: [
-          { name: 'Nome', width: '100px' },
-          { name: 'Cognome', width: '100px' },
-          { name: 'Azienda' },
+          { name: 'Nome Account' },
           { name: 'Telefono', width: '100px' },
-          { name: 'Email', width: '200px' }, 
-          { name: 'Stato' },
-          { 
-            name: 'Data Creazione',
-            formatter: (cell) => new Date(cell).toLocaleDateString()
-          }
+          { name: 'Settore', width: '200px' }
         ],
         data: records.map(row => [
-          row.firstname,
-          row.lastname,
-          row.company,
+          row.name,
           row.phone,
-          row.email,
-          row.status,
-          row.createdDate
+          row.industry
         ]),
         pagination: { limit: 10 },
         search: true,
@@ -101,7 +81,7 @@
             tr: "cursor-pointer" 
         },
         language: {
-          search: { placeholder: "Cerca lead..." },
+          search: { placeholder: "Cerca Account..." },
           pagination: { previous: "Prec", next: "Succ", showing: "Mostro", results: () => "risultati" }
         }
       }).render(tableWrapper);

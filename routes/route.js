@@ -8,6 +8,7 @@ const requireAuth = require('../middleware/requireAuth');
 const authController = require('../controllers/authController');
 const serviceController = require('../controllers/serviceController');
 const leadController = require('../controllers/leadController');
+const accountController = require('../controllers/accountController');
 
 // ============================================================================
 // 1. ROTTE PUBBLICHE (Accessibili a tutti)
@@ -63,11 +64,13 @@ route.get('/index', (req, res) => res.render('index', { title: 'Dashboard' }));
 // API
 route.get('/api/servizi/products', serviceController.getProducts);
 route.get('/api/leads/all', leadController.getLeads);
+route.get('/api/accounts/all', accountController.getAccounts);
 
 const pagesConfig = [
     // Apps
     { path: '/apps-service', title: 'Servizi' },
     { path: '/apps-leads', title: 'Lead' },
+    { path: '/apps-accounts', title: 'Account' },
     { path: '/apps-invoice-create', title: 'Invoice Create' },
     { path: '/apps-invoice-details', title: 'Invoice Details' },
     { path: '/apps-invoices', title: 'Invoices' },
