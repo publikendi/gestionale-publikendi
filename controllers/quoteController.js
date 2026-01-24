@@ -1,4 +1,4 @@
-const salesforceOpportunity = require("../services/salesforceOpportunity");
+const salesforceQuote = require("../services/salesforceQuote");
 
 function getSalesforceSession(req) {
   const sf = req.session?.salesforce;
@@ -7,9 +7,9 @@ function getSalesforceSession(req) {
 }
 
 /**
- * GET /api/opportunity/all
+ * GET /api/quote/all
  */
-exports.getOpportunity = async (req, res) => {
+exports.getQuote = async (req, res) => {
   try {
     const sf = getSalesforceSession(req);
     if (!sf)
@@ -19,7 +19,7 @@ exports.getOpportunity = async (req, res) => {
 
     const apiVersion = process.env.SALESFORCE_API_VERSION || "59.0";
 
-    const records = await salesforceOpportunity.fetchOpportunity({
+    const records = await salesforceQuote.fetchQuote({
       instanceUrl: sf.instanceUrl,
       accessToken: sf.accessToken,
       apiVersion,
@@ -27,10 +27,10 @@ exports.getOpportunity = async (req, res) => {
 
     return res.json({ records });
   } catch (err) {
-    console.error('[opportunityController.getOpportunity] failed', err.message);
+    console.error('[quoteController.getQuote] failed', err.message);
     
     if (err.status === 401) {
-      console.warn('[opportunityController] Salesforce 401: Invalido la sessione utente.');
+      console.warn('[quoteController] Salesforce 401: Invalido la sessione utente.');
       return req.session.destroy(() => {
         return res.status(401).json({ error: 'Sessione Salesforce scaduta. Effettua nuovamente il login.' });
       });
@@ -38,7 +38,7 @@ exports.getOpportunity = async (req, res) => {
     // Altri tipi di errori
     const statusCode = err.status || 500;
     return res.status(statusCode).json({ 
-      error: 'Errore durante il recupero delle Opportunità' 
+      error: 'Errore durante il recupero dei Preventivi' 
     });
   }
     

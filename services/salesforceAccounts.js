@@ -6,7 +6,8 @@ exports.fetchAccount = async function fetchAccount({
   apiVersion,
 }) {
   const soql = `
-    SELECT Name, Phone, Industry, CreatedDate    
+    SELECT Name, Phone, Industry, CreatedDate, 
+      (SELECT Name, StageName, CloseDate FROM Opportunities)
     FROM Account
     ORDER BY CreatedDate DESC
     LIMIT 2000
@@ -23,5 +24,11 @@ exports.fetchAccount = async function fetchAccount({
     name: account.Name ?? "",
     phone: account.Phone ?? "",
     industry: account.Industry ?? "",
+    opportunities: (account.Opportunities?.records ?? []).map((opp) => ({
+      name: opp.Name ?? "",
+      stageName: opp.StageName ?? "",
+      closeDate: opp.CloseDate ?? "",
+      amount: opp.Amount ?? "",
+    })),
   }));
 };

@@ -10,6 +10,7 @@ const serviceController = require('../controllers/serviceController');
 const leadController = require('../controllers/leadController');
 const accountController = require('../controllers/accountController');
 const opportunityController = require('../controllers/opportunityController');
+const quoteController = require('../controllers/quoteController');
 
 // ============================================================================
 // 1. ROTTE PUBBLICHE (Accessibili a tutti)
@@ -67,6 +68,7 @@ route.get('/api/servizi/products', serviceController.getProducts);
 route.get('/api/leads/all', leadController.getLeads);
 route.get('/api/accounts/all', accountController.getAccounts);
 route.get('/api/opportunity/all', opportunityController.getOpportunity);
+route.get('/api/quote/all', quoteController.getQuote);
 
 
 const pagesConfig = [
@@ -75,10 +77,10 @@ const pagesConfig = [
     { path: '/apps-leads', title: 'Lead' },
     { path: '/apps-accounts', title: 'Account' },
     { path: '/apps-opportunity', title: 'Opportunità' },
+    { path: '/apps-quote', title: 'Preventivi' },
     { path: '/apps-invoice-create', title: 'Invoice Create' },
     { path: '/apps-invoice-details', title: 'Invoice Details' },
     { path: '/apps-invoices', title: 'Invoices' },
-    { path: '/apps-projects', title: 'Projects' },
     { path: '/apps-tickets', title: 'Tickets' },
     { path: '/apps-user-contacts', title: 'User Contacts' },
     { path: '/apps-user-profile', title: 'User Profile' },
