@@ -67,7 +67,7 @@ module.exports = async function loadSalesforceUser(req, res, next) {
     next();
 
   } catch (err) {
-    if (err.status === 401) {
+    if (err.status === 401 || err.status === 403) {
       return req.session.destroy(() => res.redirect('/auth-login'));
     }
     next(err);

@@ -69,7 +69,7 @@ route.get('/api/leads/all', leadController.getLeads);
 route.get('/api/accounts/all', accountController.getAccounts);
 route.get('/api/opportunity/all', opportunityController.getOpportunity);
 route.get('/api/quote/all', quoteController.getQuote);
-
+route.get('/apps-quote-details', quoteController.getQuoteDetails);
 
 const pagesConfig = [
     // Apps

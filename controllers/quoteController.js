@@ -43,3 +43,47 @@ exports.getQuote = async (req, res) => {
   }
     
 };
+
+exports.getQuoteDetails = async (req, res) => {
+    try {
+        const quoteId = req.query.id;
+
+        if (!quoteId) {
+            return res.redirect('/apps-quote');
+        }
+
+        const sf = req.session?.salesforce; 
+        if (!sf?.accessToken || !sf?.instanceUrl) {
+            console.warn('[quoteController] Sessione Salesforce mancante o non valida');
+            return res.redirect('/auth-login');
+        }
+
+        const apiVersion = process.env.SALESFORCE_API_VERSION || "59.0";
+
+        const quoteDetails = await salesforceQuote.fetchQuoteDetails({
+            instanceUrl: sf.instanceUrl, // Preso dall'oggetto sf
+            accessToken: sf.accessToken,  // Preso dall'oggetto sf
+            apiVersion: apiVersion,
+            quoteId: quoteId
+        });
+
+        if (!quoteDetails) {
+            return res.render('apps-quote-details', { 
+                title: 'Dettaglio Preventivo', 
+                quote: null 
+            });
+        }
+
+        res.render('apps-quote-details', { 
+            title: 'Dettaglio Preventivo', 
+            quote: quoteDetails 
+        });
+
+    } catch (error) {
+        console.error("Errore recupero dettaglio preventivo:", error);
+        res.render('apps-quote-details', { 
+            title: 'Dettaglio Preventivo', 
+            quote: null 
+        });
+    }
+};

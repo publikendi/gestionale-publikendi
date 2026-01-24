@@ -1,0 +1,122 @@
+<%- contentFor('html_attribute') %>
+<%- contentFor('extra_css') %>
+<%- contentFor('body_attribute') %>
+<%- contentFor('content') %>
+
+<% if (!quote) { %>
+    <div class="alert alert-danger">Preventivo non trovato o ID non valido.</div>
+<% } else { %>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-4">
+                    <div>
+                        <img src="/images/logo-dark.png" alt="dark logo" height="24">
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-warning-subtle text-warning px-1 fs-12 mb-3">Preventivo</span>
+                        <h3 class="m-0 fw-bolder fs-20">Rif: #<%= quote.quoteNumber %></h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-4">
+                        <div class="mb-4">
+                            <h5 class="fw-bold pb-1 mb-2 fs-14"> Emesso Da: </h5>
+                            <h6 class="fs-14 mb-2">Publikendi Srl</h6>
+                            <h6 class="fs-14 text-muted mb-2 lh-base">Via Isonzo, 14,<br /> Cagliari, Italia 09122</h6>
+                            <h6 class="fs-14 text-muted mb-2 lh-base">P.IVA: 03584290922</h6>
+                        </div>
+                    </div>
+
+                    <div class="col-4">
+                        <div class="mb-4">
+                            <h5 class="fw-bold pb-1 mb-2 fs-14"> Preventivo per: </h5>
+                            <h6 class="fs-14 mb-2"><%= quote.name %></h6>
+                            <h6 class="fs-14 text-muted mb-2 lh-base">
+                                <%= quote.billingAddress.street || '-' %><br />
+                                <%= quote.billingAddress.city || '' %> <%= quote.billingAddress.state || '' %>
+                            </h6>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold fs-14"> Data Scadenza: </h5>
+                            <h6 class="fs-14 text-muted">
+                                <%= quote.expirationDate ? new Date(quote.expirationDate).toLocaleDateString() : 'N/A' %>
+                            </h6>
+                        </div>
+                    </div>
+
+                    <div class="col-4 text-end">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="table-responsive">
+                    <table class="table text-center table-nowrap align-middle mb-0">
+                        <thead>
+                            <tr class="bg-light bg-opacity-50">
+                                <th class="border-0" scope="col" style="width: 50px;">#</th>
+                                <th class="text-start border-0" scope="col">Dettaglio Prodotti</th>
+                                <th class="border-0" scope="col">Quantità</th>
+                                <th class="border-0" scope="col">Prezzo Unitario</th>
+                                <th class="text-end border-0" scope="col">Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (quote.items && quote.items.length > 0) { %>
+                                <% quote.items.forEach((item, index) => { %>
+                                <tr>
+                                    <th scope="row"><%= (index + 1).toString().padStart(2, '0') %></th>
+                                    <td class="text-start">
+                                        <span class="fw-medium"><%= item.productName %></span>
+                                    </td>
+                                    <td><%= item.quantity %></td>
+                                    <td><%= new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(item.unitPrice) %></td>
+                                    <td class="text-end"><%= new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(item.totalPrice) %></td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Nessun prodotto specificato in questo preventivo.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div>
+                    <table class="table table-nowrap align-middle mb-0 ms-auto" style="width:335px">
+                        <tbody>
+                            <tr class="border-top border-top-dashed fs-16">
+                                <td class="fw-bold">Totale Preventivo</td>
+                                <td class="fw-bold text-end">
+                                    <%= new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(quote.totalPrice) %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="bg-body p-2 rounded-2 mt-4">
+                    <p class="mb-0"><span class="fs-12 fw-bold text-uppercase">Nota: </span>
+                    Questo preventivo è valido fino alla data di scadenza indicata. Per accettazione, si prega di firmare e rinviare.</p>
+                </div>
+
+                <div class="d-print-none mb-5 mt-4">
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="javascript:window.print()" class="btn btn-primary"><i class="ti ti-printer me-1"></i> Stampa</a>
+                        <a href="/apps-quote" class="btn btn-secondary">Torna alla lista</a>
+                    </div>
+                </div>
+            </div> 
+        </div>
+    </div>
+</div>
+<% } %>
+
+<%- contentFor('extra_javascript') %>
